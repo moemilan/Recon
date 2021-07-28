@@ -241,11 +241,11 @@ checkActive() {
 			printf "\t░▀░▀░▀▀▀░░▀░░▀▀▀░░▀░░▀▀▀░░░▀▀░░▀▀▀░▀░▀░▀░▀░▀▀▀░▀░▀░▀▀▀\n"
 			printf "\033[m\n"
 			cat $subdomains | httprobe | tee -a $output_folder/alive.txt
-			cat $subdomains | httpx --silent --threads 20 | tee -a $output_folder/alive.txt
+			cat $subdomains | httpx --silent --threads 300 | tee -a $output_folder/alive.txt
 		else
 			echo -e "\n\033[1;36m[+] Active Domains 🔎\033[m"
 			cat $subdomains | httprobe >> $output_folder/alive.txt
-			cat $subdomains | httpx --silent --threads 20 >> $output_folder/alive.txt
+			cat $subdomains | httpx --silent --threads 300 >> $output_folder/alive.txt
 		fi
 		sort -u $output_folder/alive.txt -o $output_folder/alive.txt
 		bash $SCRIPTPATH/scripts/clean_alive.sh $output_folder/alive.txt $domain
@@ -1131,7 +1131,7 @@ favAnalysis $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/favicon-analysis
 # |D|i|r|e|c|t|o|r|y| |F|u|z|z|i|n|g|
 # +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
 
-#dirFuzz $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/fuzz
+dirFuzz $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/fuzz
 
 # +-+-+-+-+ +-+-+-+-+-+
 # |C|r|e|d| |S|t|u|f|f|
@@ -1160,7 +1160,7 @@ ghDork $OUTFOLDER/dorks/github-dorks
  # |P|o|r|t| |S|c|a|n|n|i|n|g|
  # +-+-+-+-+ +-+-+-+-+-+-+-+-+
 
- #portscan $DOMAINS $OUTFOLDER/DNS/ip_only.txt $OUTFOLDER/portscan/
+portscan $DOMAINS $OUTFOLDER/DNS/ip_only.txt $OUTFOLDER/portscan/
 
  # +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+
  # |E|n|d|p|o|i|n|t|s| |e|n|u|m|e|r|a|t|i|o|n|

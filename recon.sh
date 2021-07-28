@@ -162,6 +162,7 @@ wafDetect() {
 			wafw00f -i $1 -a -o $OUTFOLDER/subdomains/waf.txt
 		fi
 	fi
+
 }
 
 
@@ -240,13 +241,14 @@ checkActive() {
 			printf "\t░▀░▀░▀▀▀░░▀░░▀▀▀░░▀░░▀▀▀░░░▀▀░░▀▀▀░▀░▀░▀░▀░▀▀▀░▀░▀░▀▀▀\n"
 			printf "\033[m\n"
 			cat $subdomains | httprobe | tee -a $output_folder/alive.txt
-			cat $subdomains | httpx --silent --threads 300 | tee -a $output_folder/alive.txt
+			cat $subdomains | httpx --silent --threads 20 | tee -a $output_folder/alive.txt
 		else
 			echo -e "\n\033[1;36m[+] Active Domains 🔎\033[m"
 			cat $subdomains | httprobe >> $output_folder/alive.txt
-			cat $subdomains | httpx --silent --threads 300 >> $output_folder/alive.txt
+			cat $subdomains | httpx --silent --threads 20 >> $output_folder/alive.txt
 		fi
 		sort -u $output_folder/alive.txt -o $output_folder/alive.txt
+		bash $SCRIPTPATH/scripts/clean_alive.sh $output_folder/alive.txt $domain
 	fi
 }
 
@@ -278,13 +280,14 @@ subdomainEnumeration() {
 			curl -s "https://securitytrails.com/list/apex_domain/$domain" | grep -Po "((http|https):\/\/)?(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | grep ".$domain" | sort -u | tee -a $output_folder/subdomains.txt
 			echo -e "\n\033[36m>>>\033[35m Running findomain 🔍\033[m"
 			findomain -q --target $target | tee -a $output_folder/subdomains.txt || $GOPATH/bin/findomain -q --target $target | tee -a $output_folder/subdomains.txt
-			echo -e "\n\033[36m>>>\033[35m Running SubDomainizer 🔍\033[m"
-			python3 $SCRIPTPATH/tools/SubDomainizer.py -u $target -o $SCRIPTPATH/SubDomainizer$domain.txt | tee $OUTFOLDER/SubDomainizer-$domain.txt
-			echo -e "\n\033[36m>>>\033[35m Running sublist3r 🔍\033[m"
-			sublist3r -d $target -o $SCRIPTPATH/sublist3r-$domain.txt
-			cat $SCRIPTPATH/sublist3r-$domain.txt >> $output_folder/subdomains.txt
-			rm $SCRIPTPATH/sublist3r-$domain.txt
-			knockpy $target -w $wordlist -o $output_folder/knockpy/ -t 5
+			#echo -e "\n\033[36m>>>\033[35m Running SubDomainizer 🔍\033[m"
+			#python3 $SCRIPTPATH/tools/SubDomainizer.py -u $target -o $SCRIPTPATH/SubDomainizer$domain.txt | tee $OUTFOLDER/SubDomainizer-$domain.txt
+			#echo " ✅"
+			#echo -e "\n\033[36m>>>\033[35m Running sublist3r 🔍\033[m"
+			#sublist3r -d $target -o $SCRIPTPATH/sublist3r-$domain.txt
+			#cat $SCRIPTPATH/sublist3r-$domain.txt >> $output_folder/subdomains.txt
+			#rm $SCRIPTPATH/sublist3r-$domain.txt
+			#knockpy $target -w $wordlist -o $output_folder/knockpy/ -t 5
 			if [ "$GHAPIKEY" != "False" ]; then
 				echo -e "\n\033[36m>>>\033[35m Running Github-Subdomains 🔍\033[m"
 				python3 $SCRIPTPATH/tools/github-search/github-subdomains.py -t $GHAPIKEY -d $target | tee -a $output_folder/subdomains.txt
@@ -304,31 +307,28 @@ subdomainEnumeration() {
 			echo -e -n "\033[36m>>>\033[35m Running amass 🔍\033[m"
 			amass enum --passive -d $target >> $output_folder/subdomains.txt || $GOPATH/bin/amass enum --passive -d $target >> $output_folder/subdomains.txt
 			echo " ✅"
-			echo -e -n "\033[36m>>>\033[35m Getting Subdomains from RapidDNS.io 🔍\033[m"
-			curl -s "https://rapiddns.io/subdomain/$target?full=1#result" | grep "<td><a" | cut -d '"' -f 2 | grep http | cut -d '/' -f3 | sed 's/#results//g' | sort -u >> $output_folder/subdomains.txt
-			echo " ✅"
-			echo -e -n "\033[36m>>>\033[35m Getting Subdomains from Riddler.io 🔍\033[m"
-			curl -s "https://riddler.io/search/exportcsv?q=pld:$target" | grep -Po "(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | sort -u >> $output_folder/subdomains.txt
-			echo " ✅"
-			echo -e -n "\033[36m>>>\033[35m Getting Subdomains from SecurityTrails 🔍\033[m"
-			curl -s "https://securitytrails.com/list/apex_domain/$domain" | grep -Po "((http|https):\/\/)?(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | grep ".$domain" | sort -u >> $output_folder/subdomains.txt
-			echo " ✅"
+			#echo -e -n "\033[36m>>>\033[35m Getting Subdomains from RapidDNS.io 🔍\033[m"
+			#curl -s "https://rapiddns.io/subdomain/$target?full=1#result" | grep "<td><a" | cut -d '"' -f 2 | grep http | cut -d '/' -f3 | sed 's/#results//g' | sort -u >> $output_folder/subdomains.txt
+			#echo " ✅"
+			#echo -e -n "\033[36m>>>\033[35m Getting Subdomains from Riddler.io 🔍\033[m"
+			#curl -s "https://riddler.io/search/exportcsv?q=pld:$target" | grep -Po "(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | sort -u >> $output_folder/subdomains.txt
+			#echo " ✅"
+			#echo -e -n "\033[36m>>>\033[35m Getting Subdomains from SecurityTrails 🔍\033[m"
+			#curl -s "https://securitytrails.com/list/apex_domain/$domain" | grep -Po "((http|https):\/\/)?(([\w.-]*)\.([\w]*)\.([A-z]))\w+" | grep ".$domain" | sort -u >> $output_folder/subdomains.txt
+			#echo " ✅"
 			echo -e -n "\033[36m>>>\033[35m Running findomain 🔍\033[m"
 			findomain -q --target $target >> $output_folder/subdomains.txt || $GOPATH/bin/findomain -q --target $target >> $output_folder/subdomains.txt
 			echo " ✅"
-			echo -e -n "\033[36m>>>\033[35m Running SubDomainizer 🔍\033[m"
-			python3 $SCRIPTPATH/tools/SubDomainizer.py -u $target -o $SCRIPTPATH/SubDomainizer$domain.txt >> $OUTFOLDER/subdomains/SubDomainizer-$domain.txt
-			echo " ✅"
-			echo -e -n "\n\033[36m>>>\033[35m Running sublist3r 🔍\033[m"
-			sublist3r -d $target -o $SCRIPTPATH/sublist3r-$domain.txt > $SCRIPTPATH/temp.txt
-			cat $SCRIPTPATH/sublist3r-$domain.txt >> $output_folder/subdomains.txt
-			rm $SCRIPTPATH/sublist3r-$domain.txt
-			rm $SCRIPTPATH/temp.txt
-			echo " ✅"
-			echo -e -n "\n\033[36m>>>\033[35m Running Knockpy 🔍\033[m"
-			knockpy $target -w $wordlist -o $output_folder/knockpy/ -t 5 > $SCRIPTPATH/knocktemp
-			rm $SCRIPTPATH/knocktemp
-			echo " ✅"
+			#echo -e -n "\n\033[36m>>>\033[35m Running sublist3r 🔍\033[m"
+			#sublist3r -d $target -o $SCRIPTPATH/sublist3r-$domain.txt > $SCRIPTPATH/temp.txt
+			#cat $SCRIPTPATH/sublist3r-$domain.txt >> $output_folder/subdomains.txt
+			#rm $SCRIPTPATH/sublist3r-$domain.txt
+			#rm $SCRIPTPATH/temp.txt
+			#echo " ✅"
+			#echo -e -n "\n\033[36m>>>\033[35m Running Knockpy 🔍\033[m"
+			#knockpy $target -w $wordlist -o $output_folder/knockpy/ -t 5 > $SCRIPTPATH/knocktemp
+			#rm $SCRIPTPATH/knocktemp
+			#echo " ✅"
 			if [ "$GHAPIKEY" != "False" ]; then
 				echo -e -n "\033[36m>>>\033[35m Running Github-Subdomains 🔍\033[m"
 				python3 $SCRIPTPATH/tools/github-search/github-subdomains.py -t $GHAPIKEY -d $target >> $output_folder/subdomains.txt
@@ -338,13 +338,13 @@ subdomainEnumeration() {
 				echo " ✅"
 			fi
 		fi
-		cat $SCRIPTPATH/SubDomainizer$domain.txt >> $output_folder/subdomains.txt
-		rm $SCRIPTPATH/SubDomainizer$domain.txt
-		for a in $(ls $output_folder/knockpy/*); do
-			python3 $SCRIPTPATH/scripts/knocktofile.py -f $a -o $SCRIPTPATH/knock.txt
-		done
-		cat $SCRIPTPATH/knock.txt >> $output_folder/subdomains.txt
-		rm $SCRIPTPATH/knock.txt
+		#cat $SCRIPTPATH/SubDomainizer$domain.txt >> $output_folder/subdomains.txt
+		#rm $SCRIPTPATH/SubDomainizer$domain.txt
+		# for a in $(ls $output_folder/knockpy/*); do
+		# 	python3 $SCRIPTPATH/scripts/knocktofile.py -f $a -o $SCRIPTPATH/knock.txt
+		# done
+		# cat $SCRIPTPATH/knock.txt >> $output_folder/subdomains.txt
+		# rm $SCRIPTPATH/knock.txt
 		sort -u $output_folder/subdomains.txt -o $output_folder/subdomains.txt
 		cat $output_folder/subdomains.txt | grep -v "\*" >> $SCRIPTPATH/temporary.txt
 		cat $SCRIPTPATH/temporary.txt | grep -v "[-] error occurred: HTTPSConnectionPool(host=raw.githubusercontent.com, port=443): Read timed out. (read timeout=5)" >> $SCRIPTPATH/temporary2.txt
@@ -395,21 +395,21 @@ dnsLookup() {
 			echo -e "\033[36m>>>\033[35m Discovering IPs 🔍\033[32m"
 			dnsx --silent -l $domains -resp -o $output_folder/DNS/dns.txt || $GOPATH/bin/dnsx -l $DOMAINS -resp -o $output_folder/DNS/dns.txt
 			echo -e "\033[m"
-			echo -e "\033[36m>>>\033[35m DNS enumeration 🔍\033[m"
-			dnsrecon -d $domain -D $wordlist | tee -a $output_folder/DNS/dnsrecon.txt
-			dnsenum $domain -f $wordlist -o $output_folder/DNS/dnsenum.xml
+			#echo -e "\033[36m>>>\033[35m DNS enumeration 🔍\033[m"
+			#dnsrecon -d $domain -D $wordlist | tee -a $output_folder/DNS/dnsrecon.txt
+			#dnsenum $domain -f $wordlist -o $output_folder/DNS/dnsenum.xml
 		else
 			echo -e "\n\033[1;36m[+] DNS Lookup 🔎\033[m"
 			echo -e -n "\033[36m>>>\033[35m Discovering IPs 🔍\033[m"
 			dnsx --silent -l $domains -resp -o $output_folder/DNS/dns.txt > $SCRIPTPATH/temp || $GOPATH/bin/dnsx --silent -l $domains -resp -o $output_folder/DNS/dns.txt > $SCRIPTPATH/temp
 			rm $SCRIPTPATH/temp
 			echo " ✅"
-			echo -e -n "\033[36m>>>\033[35m DNS enumeration 🔍\033[m"
-			dnsrecon -d $domain -D $wordlist >> $output_folder/DNS/dnsrecon.txt 2>/dev/null > $SCRIPTPATH/temp1
-			rm $SCRIPTPATH/temp1
-			dnsenum $domain -f $wordlist -o $output_folder/DNS/dnsenum.xml 2>/dev/null > $SCRIPTPATH/temp2
-			rm $SCRIPTPATH/temp2
-			echo " ✅"
+			#echo -e -n "\033[36m>>>\033[35m DNS enumeration 🔍\033[m"
+			#dnsrecon -d $domain -D $wordlist >> $output_folder/DNS/dnsrecon.txt 2>/dev/null > $SCRIPTPATH/temp1
+			# rm $SCRIPTPATH/temp1
+			# dnsenum $domain -f $wordlist -o $output_folder/DNS/dnsenum.xml 2>/dev/null > $SCRIPTPATH/temp2
+			# rm $SCRIPTPATH/temp2
+			# echo " ✅"
 		fi
 		cat $output_folder/DNS/dns.txt | awk '{print $2}' | tr -d "[]" >> $output_folder/DNS/ip_only.txt
 		if [ -e $output_folder/DNS/ip_only.txt ]; then
@@ -486,6 +486,8 @@ dirFuzz() {
 			dnohttps="$(echo $d| cut -d "/" -f3-)"
 			echo -e "\n\033[1;32m>>> Fuzzing $d\033[m"
 			ffuf -u $d/FUZZ -w $wordlist -t 100 -sf -s | tee $output_folder_fuzz/$dnohttps
+			dirsearch -u $d | tee -a $output_folder_fuzz/$dnohttps
+			sort -u $output_folder_fuzz/$dnohttps -o $output_folder_fuzz/$dnohttps
 		done
 	fi
 }
@@ -725,24 +727,25 @@ portscan() {
 			printf "\t░█▀▀░█░█░█▀▄░░█░░░░▀▀█░█░░░█▀█░█░█\n"
 			printf "\t░▀░░░▀▀▀░▀░▀░░▀░░░░▀▀▀░▀▀▀░▀░▀░▀░▀\n"
 			printf "\033[m\n"
-			echo -e "\n\033[36m>>>\033[35m Running Nmap 🔍\033[m\n"
-			nmap -iL $portscan_domains --top-ports 5000 --max-rate=50000 -oG $output_folder/nmap.txt
+			#echo -e "\n\033[36m>>>\033[35m Running Nmap 🔍\033[m\n"
+			#nmap -iL $portscan_domains --top-ports 5000 --max-rate=50000 -oG $output_folder/nmap.txt
 			echo -e "\n\033[36m>>>\033[35m Running Masscan 🔍\033[m\n"
 			sudo masscan -p1-65535 -iL $ips --max-rate=50000 -oG $output_folder/masscan.txt
-			echo -e "\n\033[36m>>>\033[35m Running Naabu 🔍\033[m\n"
-			cat $portscan_domains | filter-resolved | cf-check | sort -u | naabu -rate 40000 -silent -verify | httprobe | tee -a $output_folder/naabu.txt
+			#echo -e "\n\033[36m>>>\033[35m Running Naabu 🔍\033[m\n"
+			#cat $portscan_domains | filter-resolved | cf-check | sort -u | naabu -rate 40000 -silent -verify | httprobe | tee -a $output_folder/naabu.txt
 		else
 			echo -e "\n\033[1;36m[+] Port Scan 🔎\033[m"
-			echo -e -n "\n\033[36m>>>\033[35m Running Nmap 🔍\033[m\n"
-			nmap -iL $portscan_domains --top-ports 5000 --max-rate=50000 -oG $output_folder/nmap.txt 2>/dev/null > $SCRIPTPATH/nmaptemp
-			rm $SCRIPTPATH/nmaptemp
-			echo "✅"
+			#echo -e -n "\n\033[36m>>>\033[35m Running Nmap 🔍\033[m\n"
+			#nmap -iL $portscan_domains --top-ports 5000 --max-rate=50000 -oG $output_folder/nmap.txt 2>/dev/null > $SCRIPTPATH/nmaptemp
+			#rm $SCRIPTPATH/nmaptemp
+			#echo "✅"
 			echo -e "\n\033[36m>>>\033[35m Running Masscan 🔍\033[m\n"
 			sudo masscan -p1-65535 -iL $ips --max-rate=50000 -oG $output_folder/masscan.txt > $SCRIPTPATH/masscantemp
 			rm $SCRIPTPATH/masscantemp
-			echo -e -n "\n\033[36m>>>\033[35m Running Naabu 🔍\033[m\n"
-			cat $portscan_domains | filter-resolved | cf-check | sort -u | naabu -rate 40000 -silent -verify | httprobe >> $output_folder/naabu.txt
 			echo "✅"
+			#echo -e -n "\n\033[36m>>>\033[35m Running Naabu 🔍\033[m\n"
+			#cat $portscan_domains | filter-resolved | cf-check | sort -u | naabu -rate 40000 -silent -verify | httprobe >> $output_folder/naabu.txt
+			#echo "✅"
 		fi
 	fi
 }
@@ -766,7 +769,7 @@ linkDiscovery() {
 		[[ ! -d $output_folder/waybackurls ]] && mkdir $output_folder/waybackurls 2>/dev/null
 		for d in $(cat $alive_domains); do
 			dnohttps="$(echo $d| cut -d "/" -f3-)"
-			hakrawler --nocolor -all --url $d >> $output_folder/hakrawler/$dnohttps.txt
+			echo $d | hakrawler >> $output_folder/hakrawler/$dnohttps.txt
 			echo $d | waybackurls >> $output_folder/waybackurls/$dnohttps.txt
 		done
 		cat $output_folder/hakrawler/*.txt | cut -d "]" -f2- | sed -e 's/^[ \t]*//' >> $output_folder/all.txt
@@ -807,17 +810,20 @@ endpointsEnumeration() {
 		cat $SCRIPTPATH/output/https:/* >> $output_folder/all.txt
 		rm -rf $SCRIPTPATH/output/
 		sort -u $output_folder/all.txt -o $output_folder/all.txt
-		[[ ! -d $output_folder/js ]] && mkdir $output_folder/js
-		echo -e "\n\033[36m>>>\033[35m Enumerating Javascript files 🔍\033[m"
-		xargs -P 500 -a $DOMAINS -I@ bash -c 'nc -w1 -z -v @ 443 2>/dev/null && echo @' | xargs -I@ -P10 bash -c 'gospider -a -s "https://@" -d 2 | grep -Eo "(http|https)://[^/\"].*\.js+" | sed "s#\] \- #\n#g" | anew' | grep -Eo "(http|https)://[^/\"].*\.js+" >> $output_folder/js/js.txt
-		cat $alive_domains | waybackurls | grep -iE '\.js' | grep -iEv '(\.jsp|\.json)' >> $output_folder/js/js.txt
-		sort -u $output_folder/js/js.txt -o $output_folder/js/js.txt
-		jslen="$(cat $output_folder/js/js.txt | wc -l)"
-		echo -e "\033[32m[+] Found \033[31m$jslen\033[32m JS files\033[m"
-		cat $output_folder/js/js.txt | anti-burl | awk '{print $4}' | sort -u >> $output_folder/js/AliveJS.txt
-		sort -u $output_folder/js/AliveJS.txt -o $output_folder/js/AliveJS.txt
-		jsalivelen="$(cat $output_folder/js/AliveJS.txt | wc -l)"
-		echo -e "\033[32m[+] Found \033[31m$jsalivelen\033[32m alive JS files\033[m"
+		# [[ ! -d $output_folder/js ]] && mkdir $output_folder/js
+		# echo -e "\n\033[36m>>>\033[35m Enumerating Javascript files 🔍\033[m"
+		# xargs -P 500 -a $DOMAINS -I@ bash -c 'nc -w1 -z -v @ 443 2>/dev/null && echo @' | xargs -I@ -P10 bash -c 'gospider -a -s "https://@" -d 2 | grep -Eo "(http|https)://[^/\"].*\.js+" | sed "s#\] \- #\n#g" | anew' | grep -Eo "(http|https)://[^/\"].*\.js+" >> $output_folder/js/js.txt
+		# cat $alive_domains | waybackurls | grep -iE '\.js' | grep -iEv '(\.jsp|\.json)' >> $output_folder/js/js.txt
+		# sort -u $output_folder/js/js.txt -o $output_folder/js/js.txt
+		# jslen="$(cat $output_folder/js/js.txt | wc -l)"
+		# echo -e "\033[32m[+] Found \033[31m$jslen\033[32m JS files\033[m"
+		# cat $output_folder/js/js.txt | anti-burl | awk '{print $4}' | sort -u >> $output_folder/js/AliveJS.txt
+		# sort -u $output_folder/js/AliveJS.txt -o $output_folder/js/AliveJS.txt
+		# jsalivelen="$(cat $output_folder/js/AliveJS.txt | wc -l)"
+		# echo -e "\033[32m[+] Found \033[31m$jsalivelen\033[32m alive JS files\033[m"
+		echo -e -n "\033[36m>>>\033[35m Running SubDomainizer 🔍\033[m"
+		python3 $SCRIPTPATH/tools/SubDomainizer.py -l $alive_domains -o $OUTFOLDER/subdomains/SubDomainizer$domain.txt | tee $OUTFOLDER/SubDomainizer-$domain.txt
+		echo " ✅"
 	fi
 }
 
@@ -852,9 +858,10 @@ findVuln() {
 		fi
 		sed '/^$/d' $output_folder/xss-discovery/temppossible-xss.txt > $output_folder/xss-discovery/possible-xss.txt
 		sort -u $output_folder/xss-discovery/possible-xss.txt -o $output_folder/xss-discovery/possible-xss.txt
+		for i in $(cat $output_folder/xss-discovery/possible-xss.txt | grep -v $domain); do sed -i "\#$i#d" $output_folder/xss-discovery/possible-xss.txt; done
 		echo -e "\n\033[36m>>>\033[34m Finding XSS with Oneliner🤖\033[m"
 		cat $output_folder/xss-discovery/possible-xss.txt | grep "=" | qsreplace '"><script>alert(1)</script>' | while read -r url; do
-		req="$(curl --silent --path-as-is --insecure $url | grep -qs '<script>alert(1)')"
+		req="$(curl --silent --path-as-is --insecure --connect-timeout 30 $url | grep -qs '<script>alert(1)')"
 		if [ "$req" != "" ]; then
 			if [ "$QUIET" != "True" ]; then
 				echo "\033[1;31m$req\033[m"
@@ -869,7 +876,7 @@ findVuln() {
 	if [ "$FUZZ" == "True" ]; then
 		for a in $(cat $output_folder/xss-discovery/possible-xss.txt); do
 			echo -e "\033[32m[+] Fuzzing $a\033[m"
-			python3 $SCRIPTPATH/tools/XSStrike/xsstrike.py -u $a
+			python3 $SCRIPTPATH/tools/XSStrike/xsstrike.py -u $a --file-log-level INFO --log-file $output_folder/xss-discovery/xsstrike.txt
 		done
 		echo -e "\n\033[36m>>>\033[34m Finding XSS with Dalfox🤖\033[m"
 		gospider -S $OUTFOLDER/subdomains/alive.txt -c 10 -d 5 --blacklist ".(jpg|jpeg|gif|css|tif|tiff|png|ttf|woff|woff2|ico|pdf|svg|txt)" --other-source | grep -e "code-200" | awk '{print $5}'| grep "=" | qsreplace -a | dalfox pipe --skip-bav --silence | tee -a $output_folder/xss-discovery/xss.txt
@@ -878,7 +885,7 @@ findVuln() {
 	echo -e "\033[1;33m[!] Found \033[1;31m$xssfound\033[33m possibles XSS\033[m"
 	echo -e "\n\033[36m>>>\033[35m Finding 403 HTTP Responses 🤖\033[m"
 	for a in $(cat $DOMAINS); do
-		r="$(curl -I -s -k $a | grep 'HTTP' | awk '{print $2}')"
+		r="$(curl -I -s -k --connect-timeout 30 $a | grep 'HTTP' | awk '{print $2}')"
 		if [ "$r" == "403" ]; then
 			echo -e "\033[32m$a \033[35m[$r]\033[m"
 			echo $a >> $output_folder/403.txt
@@ -944,6 +951,7 @@ findVuln() {
 		sqlmap -m $output_folder/possible-sqli.txt --batch --random-agent --level 1 | tee -a $output_folder/sqli.txt
 	fi
 	fi
+	echo -e "\n\033[36m>>>\033[35m Finding Information 🤖\033[m"
 }
 
 
@@ -1076,13 +1084,13 @@ fi
 # +-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+
 # |A|S|N| |E|n|u|m|e|r|a|t|i|o|n|
 # +-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+
-asnEnum $domain $OUTFOLDER/asn
+#asnEnum $domain $OUTFOLDER/asn
 
- # +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+
- # |S|u|b|d|o|m|a|i|n| |E|n|u|m|e|r|a|t|i|o|n|
- # +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+
+# +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+
+# |S|u|b|d|o|m|a|i|n| |E|n|u|m|e|r|a|t|i|o|n|
+# +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+
 
- subdomainEnumeration $domain $OUTFOLDER/subdomains
+subdomainEnumeration $domain $OUTFOLDER/subdomains
 
 # +-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
 # |O|r|g|a|n|i|z|i|n|g| |d|o|m|a|i|n|s|
@@ -1093,7 +1101,7 @@ organizeDomains $DOMAINS $OUTFOLDER/subdomains
 # |S|u|b|d|o|m|a|i|n| |T|a|k|e|o|v|e|r|
 # +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
 
-subdomainTakeover $DOMAINS $OUTFOLDER/subdomains/subdomain-takeover
+#subdomainTakeover $DOMAINS $OUTFOLDER/subdomains/subdomain-takeover
 
 # +-+-+-+ +-+-+-+-+-+-+
 # |D|N|S| |L|o|o|k|u|p|
@@ -1101,11 +1109,11 @@ subdomainTakeover $DOMAINS $OUTFOLDER/subdomains/subdomain-takeover
 
 dnsLookup $DOMAINS $OUTFOLDER
 
- # +-+-+-+-+-+-+-+-+ +-+-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+ +-+-+-+-+-+-+
- # |C|h|e|c|k|i|n|g| |w|h|i|c|h| |d|o|m|a|i|n|s| |a|r|e| |a|c|t|i|v|e|
- # +-+-+-+-+-+-+-+-+ +-+-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+ +-+-+-+-+-+-+
+# +-+-+-+-+-+-+-+-+ +-+-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+ +-+-+-+-+-+-+
+# |C|h|e|c|k|i|n|g| |w|h|i|c|h| |d|o|m|a|i|n|s| |a|r|e| |a|c|t|i|v|e|
+# +-+-+-+-+-+-+-+-+ +-+-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+ +-+-+-+-+-+-+
 
- checkActive $DOMAINS $OUTFOLDER/subdomains
+checkActive $DOMAINS $OUTFOLDER/subdomains
 
 # +-+-+-+ +-+-+-+-+-+-+-+-+-+
 # |W|a|f| |D|e|t|e|c|t|i|o|n|
@@ -1123,7 +1131,7 @@ favAnalysis $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/favicon-analysis
 # |D|i|r|e|c|t|o|r|y| |F|u|z|z|i|n|g|
 # +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
 
-dirFuzz $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/fuzz
+#dirFuzz $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/fuzz
 
 # +-+-+-+-+ +-+-+-+-+-+
 # |C|r|e|d| |S|t|u|f|f|
@@ -1146,13 +1154,13 @@ ghDork $OUTFOLDER/dorks/github-dorks
 # |S|c|r|e|e|n|s|h|o|t|s|
 # +-+-+-+-+-+-+-+-+-+-+-+
 
-screenshots $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/$domain-screenshots
+#screenshots $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/$domain-screenshots
 
  # +-+-+-+-+ +-+-+-+-+-+-+-+-+
  # |P|o|r|t| |S|c|a|n|n|i|n|g|
  # +-+-+-+-+ +-+-+-+-+-+-+-+-+
 
- portscan $DOMAINS $OUTFOLDER/DNS/ip_only.txt $OUTFOLDER/portscan/
+ #portscan $DOMAINS $OUTFOLDER/DNS/ip_only.txt $OUTFOLDER/portscan/
 
  # +-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+
  # |E|n|d|p|o|i|n|t|s| |e|n|u|m|e|r|a|t|i|o|n|
@@ -1167,6 +1175,8 @@ screenshots $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/$domain-screenshots
 # I'm only using the standard nuclei templates, but you can create and add them in ~/nuclei-templates
 
 findVuln $OUTFOLDER/subdomains/alive.txt $OUTFOLDER/vuln
+
+whatweb -i $OUTFOLDER/subdomains/alive.txt > $OUTFOLDER/whatinfo.txt
 
 org="$(echo $domain | cut -d '.' -f1)"
 if [ -e $OUTFOLDER/asn/$org.txt ]; then
@@ -1210,3 +1220,4 @@ echo -e "\033[1;32m[+] Check \033[1;31m$OUTFOLDER\033[1;32m and check all dorks 
 echo -e "\033[1;32mHappy Hunting! 😁\033[m"
 echo -e "\033[1;31m====================\033[1;32m DONE \033[1;31m====================\033[m"
 echo -e "\033[1;31m====================================================================================================================\033[m"
+tail -15  $OUTFOLDER/recon.txt | head -12 | notify --silent
